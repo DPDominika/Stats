@@ -5,20 +5,11 @@ import helpers as helper
 
 app = dash.Dash()
 
-all_options = ['RUN_ID1', 'RUN_ID2', 'RUN_ID3']
+id_list = helper.prepare_resources()
+all_options = helper.create_all_options(id_list)
 
-
-vars_data = {
-    'RUN_ID1': {'x': helper.extract('stats/single_run_stats/180317.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180317.tsv', 'VARS')},
-    'RUN_ID2': {'x': helper.extract('stats/single_run_stats/180319.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180319.tsv', 'VARS')},
-    'RUN_ID3': {'x': helper.extract('stats/single_run_stats/180331.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180331.tsv', 'VARS')},
-}
-
-cvrg_data = {
-    'RUN_ID1': {'x': helper.extract('stats/single_run_stats/180317.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180317.tsv', 'CVRG')},
-    'RUN_ID2': {'x': helper.extract('stats/single_run_stats/180319.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180319.tsv', 'CVRG')},
-    'RUN_ID3': {'x': helper.extract('stats/single_run_stats/180331.tsv', 'SAMPLE'), 'y': helper.extract('stats/single_run_stats/180331.tsv', 'CVRG')},
-}
+vars_data = helper.create_data(all_options, id_list, 'VARS')
+cvrg_data = helper.create_data(all_options, id_list, 'CVRG')
 
 
 app.css.append_css({'external_url': 'https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css'})
@@ -37,11 +28,12 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.P('Choose runs:'),
-                        dcc.Checklist(
+                        dcc.Dropdown(
                                 id ='Runs',
                                 options=[{'label': k, 'value': k} for k in all_options],
-                                values=all_options,
-                                labelStyle={'display': 'inline-block'}
+                                value=all_options,
+                                multi=True
+
                         ),
                     ],
                     className='six columns',
@@ -70,16 +62,15 @@ app.layout = html.Div(
     ], className='ten columns offset-by-one')
 )
 
+
 @app.callback(
     dash.dependencies.Output('Runs', 'options'),
-    [dash.dependencies.Input('Runs', 'values')])
-def set_cities_options(selected_country):
-    return [{'label': i, 'value': i} for i in all_options[selected_country]]
+    [dash.dependencies.Input('Runs', 'value')])
 
 
 @app.callback(
     dash.dependencies.Output('graph', 'figure'),
-    [dash.dependencies.Input('Runs', 'values')])
+    [dash.dependencies.Input('Runs', 'value')])
 def update_image_src(selector):
     data = []
     for cvrg in selector:
@@ -110,7 +101,7 @@ def update_image_src(selector):
 
 @app.callback(
     dash.dependencies.Output('graph-2', 'figure'),
-    [dash.dependencies.Input('Runs', 'values')])
+    [dash.dependencies.Input('Runs', 'value')])
 def update_image_src(selector):
     data = []
     for vars in selector:
